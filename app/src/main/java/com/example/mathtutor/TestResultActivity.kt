@@ -12,6 +12,10 @@ class TestResultActivity : AppCompatActivity() {
         setContentView(R.layout.activity_test_result)
 
 
+        textView4.text = intent.getStringExtra("topic")
+        textView5.text = intent.getStringExtra("task")
+
+
         //TODO Сделать другую реакцию на не начальный тест
         button4.setOnClickListener {
             startActivity(Intent(this@TestResultActivity, MainActivity::class.java))
