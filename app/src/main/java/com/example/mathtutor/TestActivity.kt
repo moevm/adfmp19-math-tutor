@@ -10,6 +10,8 @@ import java.util.concurrent.TimeUnit
 
 class TestActivity : AppCompatActivity() {
 
+    private var isReady: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_test)
@@ -29,6 +31,7 @@ class TestActivity : AppCompatActivity() {
             checkBoxes.addView(checkBox3)
 
             ready.setOnClickListener {
+                isReady = true
                 val intent = Intent(this@TestActivity, TestResultActivity::class.java)
                 intent.putExtra("topic", "Входной тест")
                 intent.putExtra("task", "Входной тест пройден.\nГотов начать учиться?")
@@ -49,6 +52,7 @@ class TestActivity : AppCompatActivity() {
             checkBoxes.addView(checkBox4)
 
             ready.setOnClickListener {
+                isReady = true
                 val intent = Intent(this@TestActivity, TestResultActivity::class.java)
                 intent.putExtra("topic", "Задачи по теме\n\"Десятичные дроби\"")
                 intent.putExtra("task", "Отлично! Решено 9 из 10 задач\nТы получаешь звездочку!")
@@ -62,11 +66,11 @@ class TestActivity : AppCompatActivity() {
 
     private fun runTimer() {
         val t = Thread {
-            while (progressBar.progress < progressBar.max) {
+            while (progressBar.progress < progressBar.max && !isReady) {
                 TimeUnit.MILLISECONDS.sleep(100)
                 ++progressBar.progress
             }
-            ready.callOnClick()
+            if (!isReady) ready.callOnClick()
         }
         t.start()
     }
