@@ -4,6 +4,9 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.CheckBox
+import com.example.mathtutor.DB.DBHelper
+import com.example.mathtutor.DB.Lesson
+import com.example.mathtutor.DB.Task
 import kotlinx.android.synthetic.main.activity_test.*
 import java.util.concurrent.TimeUnit
 
@@ -12,65 +15,106 @@ class TestActivity : AppCompatActivity() {
 
     private var isReady: Boolean = false
 
+    private lateinit var dbHelper: DBHelper
+
+    var rightAnswers = 0
+    var rightAnswer = 0
+
+    lateinit var tasks: ArrayList<Task>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_test)
 
-        nameTask.text = intent.getStringExtra("topic")
-        taskDesc.text = intent.getStringExtra("task")
+        val lesson = intent.getParcelableExtra<Lesson>("lesson")
 
-        if (nameTask.text == "Входной тест") {
-            val checkBox1 = CheckBox(this)
-            checkBox1.text = "1"
-            val checkBox2 = CheckBox(this)
-            checkBox2.text = "600"
-            val checkBox3 = CheckBox(this)
-            checkBox3.text = "tg(8)"
-            checkBoxes.addView(checkBox1)
-            checkBoxes.addView(checkBox2)
-            checkBoxes.addView(checkBox3)
+        nameTask.text = lesson.topic
 
-            ready.setOnClickListener {
-                isReady = true
-                val intent = Intent(this@TestActivity, TestResultActivity::class.java)
-                intent.putExtra("topic", "Входной тест")
-                intent.putExtra("task", "Входной тест пройден.\nГотов начать учиться?")
-                startActivity(intent)
+        dbHelper = DBHelper(this)
+
+        tasks = dbHelper.getTasks(lesson)
+
+        setTask(0)
+    }
+
+    private fun setTask(i: Int) {
+        if (i == tasks.size) {
+            finishUp()
+            return
+        }
+        isReady = false
+
+        checkBoxes.removeAllViews()
+        val answers = ArrayList<CheckBox>()
+
+        tasks[i].answers.forEachIndexed { j, answer ->
+            val checkBox = CheckBox(this)
+            checkBox.text = answer.text
+            answers.add(checkBox)
+            checkBoxes.addView(checkBox)
+
+            if (answer.id == tasks[i].right_answer) {
+                rightAnswer = j
             }
-        } else {
-            val checkBox1 = CheckBox(this)
-            checkBox1.text = "194.125"
-            val checkBox2 = CheckBox(this)
-            checkBox2.text = "600"
-            val checkBox3 = CheckBox(this)
-            checkBox3.text = "14.84"
-            val checkBox4 = CheckBox(this)
-            checkBox4.text = "-14"
-            checkBoxes.addView(checkBox1)
-            checkBoxes.addView(checkBox2)
-            checkBoxes.addView(checkBox3)
-            checkBoxes.addView(checkBox4)
+        }
 
-            ready.setOnClickListener {
-                isReady = true
-                val intent = Intent(this@TestActivity, TestResultActivity::class.java)
-                intent.putExtra("topic", "Задачи по теме\n\"Десятичные дроби\"")
-                intent.putExtra("task", "Отлично! Решено 9 из 10 задач\nТы получаешь звездочку!")
-                startActivity(intent)
-            }
+        taskDesc.text = tasks[i].task
+
+        ready.setOnClickListener {
+            isReady = true
+            check()
+            setTask(i + 1)
         }
 
         runTimer()
     }
 
+    private fun finishUp() {
+        isReady = true
+
+        val lesson = intent.getParcelableExtra<Lesson>("lesson")
+
+        val intent = Intent(this@TestActivity, TestResultActivity::class.java)
+        intent.putExtra("topic", lesson.topic)
+        if (lesson.id.toInt() != 0) {
+            intent.putExtra("task", "Правильных ответов $rightAnswers из ${tasks.size}")
+        } else {
+            intent.putExtra("task", "Входной тест пройден!\nПравильных ответов $rightAnswers из ${tasks.size}")
+        }
+        startActivity(intent)
+    }
+
+    private fun check() {
+        var isRight = false
+
+        for (i in 0 until checkBoxes.childCount) {
+            val checkBox = checkBoxes.getChildAt(i) as CheckBox
+            if (checkBox.isChecked && i != rightAnswer) {
+                isRight = false
+                break
+            }
+            if (checkBox.isChecked && i == rightAnswer) {
+                isRight = true
+            }
+        }
+
+        if (isRight) {
+            rightAnswers++
+        }
+    }
 
     private fun runTimer() {
+        progressBar.max = 45
+        progressBar.progress = 0
         val t = Thread {
             while (progressBar.progress < progressBar.max && !isReady) {
-                TimeUnit.MILLISECONDS.sleep(100)
+                TimeUnit.MILLISECONDS.sleep(1000)
                 ++progressBar.progress
             }
-            if (!isReady) ready.callOnClick()
+            if (!isReady) {
+                isReady = true
+                check()
+            }
         }
         t.start()
     }
