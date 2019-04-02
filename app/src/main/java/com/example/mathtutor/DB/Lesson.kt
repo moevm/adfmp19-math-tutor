@@ -9,8 +9,7 @@ class Lesson(val topic: String, val content: Int, val last_visited: Long?, val i
         parcel.readInt(),
         parcel.readValue(Long::class.java.classLoader) as? Long,
         parcel.readLong()
-    ) {
-    }
+    )
 
     override fun toString(): String {
         return "topic: ${this.topic} content: ${this.content} last_visited: ${this.last_visited} id: ${this.id}"
