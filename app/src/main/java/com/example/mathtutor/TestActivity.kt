@@ -4,23 +4,26 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.CheckBox
+import com.example.mathtutor.DB.Answer
 import com.example.mathtutor.DB.DBHelper
 import com.example.mathtutor.DB.Lesson
 import com.example.mathtutor.DB.Task
 import kotlinx.android.synthetic.main.activity_test.*
 import java.util.*
+import kotlin.collections.ArrayList
 
 
 class TestActivity : AppCompatActivity() {
 
-    @Volatile private var isReady: Boolean = false
+    @Volatile
+    private var isReady: Boolean = false
 
     private lateinit var dbHelper: DBHelper
 
     var rightAnswers = 0
     var rightAnswer = 0
 
-    lateinit var tasks: ArrayList<Task>
+    var tasks = ArrayList<Task>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,7 +35,19 @@ class TestActivity : AppCompatActivity() {
 
         dbHelper = DBHelper(this)
 
-        tasks = dbHelper.getTasks(lesson)
+        (0..9).asSequence().map {
+            when (lesson.id) {
+                1L -> TaskGenerator.generatePythagoreanTask()
+                2L -> TaskGenerator.generateSimpleTask()
+                else -> TaskGenerator.generateAnyTask()
+            }
+        }.map {
+            val answers = ArrayList<Answer>()
+            it.answers.forEachIndexed { j, s ->
+                answers.add(Answer(s, j.toLong()))
+            }
+            Task(it.questionString, lesson.id, answers, it.answerIndex.toLong(), 0)
+        }.toCollection(tasks)
 
         setTask(0)
     }

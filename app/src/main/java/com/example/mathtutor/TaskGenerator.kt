@@ -4,8 +4,8 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import kotlin.random.Random
 
-class TaskGenerator {
-    data class SimpleTask(val questionString: String, val answerString: String)
+object TaskGenerator {
+    data class SimpleTask(val questionString: String, val answerIndex: Int, val answers: ArrayList<String>)
 
     enum class Operation {
         ADD,
@@ -27,12 +27,22 @@ class TaskGenerator {
         val b = getRandomDouble()
         val operation = Operation.values().random()
 
-        return when(operation) {
-            Operation.ADD -> SimpleTask("$a + $b", "${a + b}")
-            Operation.SUB -> SimpleTask("$a - $b", "${a - b}")
-            Operation.MUL -> SimpleTask("$a * $b", "${a * b}")
-            Operation.DIV -> SimpleTask("$a / $b", "${a / b}")
+        val answers = ArrayList<String>()
+        (0..3).map {
+            getRandomDouble().toString()
+        }.toCollection(answers)
+
+        val pair = when (operation) {
+            Operation.ADD -> Pair("$a + $b", "${a + b}")
+            Operation.SUB -> Pair("$a - $b", "${a - b}")
+            Operation.MUL -> Pair("$a * $b", "${a * b}")
+            Operation.DIV -> Pair("$a / $b", "${a / b}")
         }
+
+        answers.add(pair.second)
+        answers.shuffle()
+        return SimpleTask(pair.first, answers.indexOf(pair.second), answers)
+
     }
 
     fun generatePythagoreanTask(): SimpleTask {
@@ -43,15 +53,36 @@ class TaskGenerator {
             Triple(7, 24, 25)
         )
 
-        val randomTriple= pythagoreanTriples.random()
+        val randomTriple = pythagoreanTriples.random()
 
         val chooseElem = Random.nextInt(3)
 
-        return when(chooseElem) {
-            0 -> SimpleTask("x^2 + ${randomTriple.second}^2 = ${randomTriple.third}^2", "${randomTriple.first}")
-            1 -> SimpleTask("${randomTriple.first}^2 + x^2 = ${randomTriple.third}^2", "${randomTriple.second}")
-            2 -> SimpleTask("${randomTriple.first}^2 + ${randomTriple.second}^2 = x^2", "${randomTriple.third}")
-            else -> SimpleTask("x^2 + ${randomTriple.second}^2 = ${randomTriple.third}^2", "${randomTriple.first}")
+        val answers = ArrayList<String>()
+        (0..3).map {
+            Random.nextInt(1, 30).toString()
+        }.toCollection(answers)
+
+        val pair = when (chooseElem) {
+            0 -> Pair("x^2 + ${randomTriple.second}^2 = ${randomTriple.third}^2", "${randomTriple.first}")
+            1 -> Pair("${randomTriple.first}^2 + x^2 = ${randomTriple.third}^2", "${randomTriple.second}")
+            2 -> Pair("${randomTriple.first}^2 + ${randomTriple.second}^2 = x^2", "${randomTriple.third}")
+            else -> Pair("x^2 + ${randomTriple.second}^2 = ${randomTriple.third}^2", "${randomTriple.first}")
         }
+
+        answers.add(pair.second)
+        answers.shuffle()
+        return SimpleTask(pair.first, answers.indexOf(pair.second), answers)
     }
+
+    fun generateAnyTask(): SimpleTask =
+        when (Random.nextInt(1)) {
+            0 -> generatePythagoreanTask()
+            1 -> generateSimpleTask()
+            else -> generateSimpleTask()
+        }
+
+}
+
+fun main() {
+    (0..3).forEach { print(it) }
 }
