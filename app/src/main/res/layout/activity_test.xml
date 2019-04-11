@@ -16,6 +16,12 @@
             android:textAlignment="center"
             android:layout_weight="1"
             android:layout_height="wrap_content" android:id="@+id/nameTask"/>
+    <TextView
+            android:text="1) sin^2(43)+cos^2(43) = "
+            android:gravity="center"
+            android:textAlignment="center"
+            android:layout_width="match_parent"
+            android:layout_height="71dp" android:id="@+id/taskDesc"/>
     <LinearLayout
             android:id="@+id/checkBoxes"
             android:orientation="vertical"
@@ -23,12 +29,6 @@
             android:layout_height="wrap_content"
             android:layout_weight="5"
     >
-        <TextView
-                android:text="1) sin^2(43)+cos^2(43) = "
-                android:gravity="center"
-                android:textAlignment="center"
-                android:layout_width="match_parent"
-                android:layout_height="71dp" android:id="@+id/taskDesc"/>
     </LinearLayout>
     <android.support.constraint.ConstraintLayout
             android:layout_width="match_parent"
