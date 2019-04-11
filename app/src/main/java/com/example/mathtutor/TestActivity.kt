@@ -4,15 +4,18 @@ import android.content.Intent
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.widget.CheckBox
+import com.example.mathtutor.DB.Answer
 import com.example.mathtutor.DB.DBHelper
 import com.example.mathtutor.DB.Lesson
 import com.example.mathtutor.DB.Task
 import kotlinx.android.synthetic.main.activity_test.*
-import java.util.concurrent.TimeUnit
+import java.util.*
+import kotlin.collections.ArrayList
 
 
 class TestActivity : AppCompatActivity() {
 
+    @Volatile
     private var isReady: Boolean = false
 
     private lateinit var dbHelper: DBHelper
@@ -20,7 +23,7 @@ class TestActivity : AppCompatActivity() {
     var rightAnswers = 0
     var rightAnswer = 0
 
-    lateinit var tasks: ArrayList<Task>
+    var tasks = ArrayList<Task>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,7 +35,19 @@ class TestActivity : AppCompatActivity() {
 
         dbHelper = DBHelper(this)
 
-        tasks = dbHelper.getTasks(lesson)
+        (0..9).asSequence().map {
+            when (lesson.id) {
+                1L -> TaskGenerator.generatePythagoreanTask()
+                2L -> TaskGenerator.generateSimpleTask()
+                else -> TaskGenerator.generateAnyTask()
+            }
+        }.map {
+            val answers = ArrayList<Answer>()
+            it.answers.forEachIndexed { j, s ->
+                answers.add(Answer(s, j.toLong()))
+            }
+            Task(it.questionString, lesson.id, answers, it.answerIndex.toLong(), 0)
+        }.toCollection(tasks)
 
         setTask(0)
     }
@@ -40,33 +55,33 @@ class TestActivity : AppCompatActivity() {
     private fun setTask(i: Int) {
         if (i == tasks.size) {
             finishUp()
-            return
-        }
-        isReady = false
+        } else {
+            isReady = false
 
-        checkBoxes.removeAllViews()
-        val answers = ArrayList<CheckBox>()
+            checkBoxes.removeAllViews()
+            val answers = ArrayList<CheckBox>()
 
-        tasks[i].answers.forEachIndexed { j, answer ->
-            val checkBox = CheckBox(this)
-            checkBox.text = answer.text
-            answers.add(checkBox)
-            checkBoxes.addView(checkBox)
+            tasks[i].answers.forEachIndexed { j, answer ->
+                val checkBox = CheckBox(this)
+                checkBox.text = answer.text
+                answers.add(checkBox)
+                checkBoxes.addView(checkBox)
 
-            if (answer.id == tasks[i].right_answer) {
-                rightAnswer = j
+                if (answer.id == tasks[i].right_answer) {
+                    rightAnswer = j
+                }
             }
+
+            taskDesc.text = tasks[i].task
+
+            ready.setOnClickListener {
+                isReady = true
+                check()
+                setTask(i + 1)
+            }
+
+            runTimer()
         }
-
-        taskDesc.text = tasks[i].task
-
-        ready.setOnClickListener {
-            isReady = true
-            check()
-            setTask(i + 1)
-        }
-
-        runTimer()
     }
 
     private fun finishUp() {
@@ -89,12 +104,13 @@ class TestActivity : AppCompatActivity() {
 
         for (i in 0 until checkBoxes.childCount) {
             val checkBox = checkBoxes.getChildAt(i) as CheckBox
-            if (checkBox.isChecked && i != rightAnswer) {
-                isRight = false
-                break
-            }
-            if (checkBox.isChecked && i == rightAnswer) {
-                isRight = true
+            if (checkBox.isChecked) {
+                if (i != rightAnswer) {
+                    isRight = false
+                    break
+                } else {
+                    isRight = true
+                }
             }
         }
 
@@ -104,19 +120,23 @@ class TestActivity : AppCompatActivity() {
     }
 
     private fun runTimer() {
-        progressBar.max = 45
+        progressBar.max = 1000
         progressBar.progress = 0
-        val t = Thread {
-            while (progressBar.progress < progressBar.max && !isReady) {
-                TimeUnit.MILLISECONDS.sleep(1000)
-                ++progressBar.progress
+
+        val timer = Timer()
+
+        timer.scheduleAtFixedRate(object : TimerTask() {
+            override fun run() {
+                if (progressBar.progress < progressBar.max && !isReady) {
+                    ++progressBar.progress
+                } else {
+                    if (!isReady) {
+                        isReady = true
+                        check()
+                    }
+                }
             }
-            if (!isReady) {
-                isReady = true
-                check()
-            }
-        }
-        t.start()
+        }, 0, 35)
     }
 
 }

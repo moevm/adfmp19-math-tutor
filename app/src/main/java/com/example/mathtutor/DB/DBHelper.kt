@@ -15,39 +15,47 @@ internal class DBHelper(context: Context) : SQLiteOpenHelper(context, "myDB", nu
     override fun onCreate(db: SQLiteDatabase) {
         Log.d(LOG_TAG, "--- onCreate database ---")
         db.execSQL(
-            "CREATE TABLE Lesson (\n" +
-                    "\tid integer PRIMARY KEY AUTOINCREMENT,\n" +
-                    "\ttopic string,\n" +
-                    "\tcontent string,\n" +
-                    "\tlast_visit timestamp\n" +
-                    ");\n"
+            """
+            CREATE TABLE Lesson (
+                id integer PRIMARY KEY AUTOINCREMENT,
+                topic string,
+                content string,
+                last_visit timestamp
+            );
+            """
         )
         db.execSQL(
-            "CREATE TABLE Task (\n" +
-                    "\tlesson_id integer,\n" +
-                    "\ttask string,\n" +
-                    "\ttask_id integer PRIMARY KEY AUTOINCREMENT\n" +
-                    ");\n"
+            """
+            CREATE TABLE Task (
+                lesson_id integer,
+                task string,
+                task_id integer PRIMARY KEY AUTOINCREMENT
+            );
+            """
         )
 
         db.execSQL(
-            "CREATE TABLE Answer (\n" +
-                    "\ttask_id integer,\n" +
-                    "\ttext text,\n" +
-                    "\tanswer_id integer PRIMARY KEY AUTOINCREMENT\n" +
-                    ");\n"
+            """
+            CREATE TABLE Answer (
+                task_id integer,
+                text text,
+                answer_id integer PRIMARY KEY AUTOINCREMENT
+            );
+            """
         )
         db.execSQL(
-            "CREATE TABLE Right_Answer (\n" +
-                    "\ttask_id integer,\n" +
-                    "\tanswer_id integer\n" +
-                    ");\n"
+            """
+            CREATE TABLE Right_Answer (
+                task_id integer,
+                answer_id integer
+            );
+            """
         )
         Log.d(LOG_TAG, "--- Database created ---")
     }
 
     fun insertLesson(lesson: Lesson): Long {
-        val cv = ContentValues();
+        val cv = ContentValues()
         cv.put("topic", lesson.topic)
         cv.put("content", lesson.content)
         cv.putNull("last_visit")
@@ -55,7 +63,7 @@ internal class DBHelper(context: Context) : SQLiteOpenHelper(context, "myDB", nu
         val db = writableDatabase
         val rowID = db.insert("Lesson", null, cv)
         db.close()
-        Log.d(LOG_TAG, "row inserted, ID = $rowID, lesson: $lesson");
+        Log.d(LOG_TAG, "row inserted, ID = $rowID, lesson: $lesson")
         return rowID
     }
 
@@ -80,7 +88,7 @@ internal class DBHelper(context: Context) : SQLiteOpenHelper(context, "myDB", nu
     }
 
     private fun insertAnswer(answer: Answer, task_id: Long): Long {
-        val cv = ContentValues();
+        val cv = ContentValues()
         cv.put("task_id", task_id)
         cv.put("text", answer.text)
 
@@ -93,7 +101,7 @@ internal class DBHelper(context: Context) : SQLiteOpenHelper(context, "myDB", nu
     }
 
     private fun insertRightAnswer(task_id: Long, answer_id: Long): Long {
-        val cv = ContentValues();
+        val cv = ContentValues()
         cv.put("task_id", task_id)
         cv.put("answer_id", answer_id)
 
@@ -132,7 +140,7 @@ internal class DBHelper(context: Context) : SQLiteOpenHelper(context, "myDB", nu
     }
 
     fun getLesson(): Lesson {
-        val selectRarelyVisited = "SELECT * FROM Lesson ORDER BY last_visit ASC"
+        val selectRarelyVisited = "SELECT * FROM Lesson WHERE id != 1 ORDER BY last_visit ASC"
         val c = readableDatabase.rawQuery(selectRarelyVisited, null)
         if (c.moveToFirst()) {
             val lesson = createLesson(c)
